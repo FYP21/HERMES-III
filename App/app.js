@@ -106,7 +106,7 @@ const Risk_Treatment = sequelize.define('risk_treatments', {
     underscored: true
 });
 /**
- * Define join table 'standard_Policy'
+ * Define joint table 'standard_policies'
  */
 const Standard_Policy = sequelize.define('standard_policies', {
     StandardId: {
@@ -127,13 +127,84 @@ const Standard_Policy = sequelize.define('standard_policies', {
     underscored: true
 });
 /**
+ * Define joint table 'standard_risk_drivers'
+ */
+const Standard_Risk_Driver = sequelize.define('standard_risk_drivers', {
+    StandardId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Standard,
+            key: 'id'
+        }
+    },
+    RiskDriverId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Risk_Driver,
+            key: 'id'
+        }
+    }
+}, {
+    underscored: true
+});
+/**
+ * Define joint table 'standard_assessment_frameworks'
+ */
+const Standard_Assessment_Framework = sequelize.define('standard_assessment_frameworks', {
+    StandardId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Standard,
+            key: 'id'
+        }
+    },
+    AssessmentFrameworkId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Assessment_Framework,
+            key: 'id'
+        }
+    }
+}, {
+    underscored: true
+});
+/**
+ * Define joint table 'standard_improvement_frameworks'
+ */
+const Standard_Improvement_Framework = sequelize.define('standard_improvement_frameworks', {
+    StandardId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Standard,
+            key: 'id'
+        }
+    },
+    ImprovementFrameworkId: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Improvement_Framework,
+            key: 'id'
+        }
+    }
+});
+/**
  * Define relationship between entities
  */
-Compliance_Assessment.belongsTo(Standard);
-Compliance_Assessment.belongsTo(Risk_Driver);
-Risk_Treatment.belongsTo(Compliance_Assessment, { foreignKey: "assessment_id"});
+Compliance_Assessment.belongsTo(Standard); // one to one
+Compliance_Assessment.belongsTo(Risk_Driver); // one to one 
+Risk_Treatment.belongsTo(Compliance_Assessment, { foreignKey: "assessment_id"}); // one to one 
+// many to many
 Standard.belongsToMany(Policy, { through: Standard_Policy });
 Policy.belongsToMany( Standard, { through: Standard_Policy });
+
+Standard.belongsToMany(Risk_Driver, { through: Standard_Risk_Driver });
+Risk_Driver.belongsToMany(Standard, { through: Standard_Risk_Driver });
+
+Standard.belongsToMany(Assessment_Framework, { through: Standard_Assessment_Framework });
+Assessment_Framework.belongsToMany(Standard, { through: Standard_Assessment_Framework });
+
+Standard.belongsToMany(Improvement_Framework, { through: Standard_Improvement_Framework });
+Improvement_Framework.belongsToMany(Standard, { through: Standard_Improvement_Framework });
 
 /**
  * Adding resources to Admin Bro
@@ -296,6 +367,12 @@ const run = async () => {
                 }}
             },{
                 resource: Standard_Policy,
+            }, {
+                resource: Standard_Risk_Driver,
+            }, {
+                resource: Standard_Assessment_Framework,
+            }, {
+                resource: Standard_Improvement_Framework,
             }
         ],
         rootPath: '/admin',
