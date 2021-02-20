@@ -204,6 +204,7 @@ Improvement_Framework.belongsToMany(Standard, { through: Standard_Improvement_Fr
  * Calculate Risk Rating
  */
 const calculatedRiskRating = (policyRating, procedureRating, dataRating) => {
+    let risk_rating = "";
     let mark = {
         "Good": 3,
         "Satisfactory": 2,
@@ -216,9 +217,11 @@ const calculatedRiskRating = (policyRating, procedureRating, dataRating) => {
         sum += mark[rating];
     });
 
-    if (sum >= 7) return "Low";
-    else if (sum >= 5 && sum <= 6) return "Medium";
-    else return "High";
+    if (sum >= 7) risk_rating = "Low";
+    else if (sum >= 5 && sum <= 6) risk_rating = "Medium";
+    else risk_rating = "High";
+
+    return risk_rating;
 };
 /**
  * Calculate Residual Risk Rating
