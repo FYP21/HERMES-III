@@ -93,16 +93,10 @@ const Compliance_Assessment = sequelize.define('compliance_assessments', {
     policy: { type: DataTypes.STRING },
     procedures: { type: DataTypes.STRING },
     data: { type: DataTypes.STRING },
+    treatment_option: { type: DataTypes.STRING },
     risk_rating: { type: DataTypes.STRING },
-}, {
-    underscored: true
-});
-/**
- * 
- */
-const Risk_Treatment = sequelize.define('risk_treatments', {
-    option: { type: DataTypes.STRING },
-    description: { type: DataTypes.STRING },
+    residual_risk_rating: { type: DataTypes.STRING},
+    treatment_description: { type: DataTypes.STRING }
 }, {
     underscored: true
 });
@@ -193,7 +187,6 @@ const Standard_Improvement_Framework = sequelize.define('standard_improvement_fr
  */
 Compliance_Assessment.belongsTo(Standard); // one to one
 Compliance_Assessment.belongsTo(Risk_Driver); // one to one 
-Risk_Treatment.belongsTo(Compliance_Assessment, { foreignKey: "assessment_id"}); // one to one 
 // many to many
 Standard.belongsToMany(Policy, { through: Standard_Policy });
 Policy.belongsToMany( Standard, { through: Standard_Policy });
@@ -227,8 +220,26 @@ const calculatedRiskRating = (policyRating, procedureRating, dataRating) => {
     else if (sum >= 5 && sum <= 6) return "Medium";
     else return "High";
 };
+/**
+ * Calculate Residual Risk Rating
+ */
+const calculatedResidualRisk = (risk_rating, treatment_option) => {
+    let residual_risk_rating = "";
+    if (!treatment_option) residual_risk_rating = "";
+    else if ((risk_rating === "High") && (treatment_option === "Avoid")) residual_risk_rating = "Low";
+    else if ((risk_rating === "High" ) && (treatment_option === "Accept and reduce")) residual_risk_rating = "Medium";
+    else if ((risk_rating === "Medium") && (treatment_option === "Avoid")) residual_risk_rating = "Low";
+    else if ((risk_rating === "Medium") && (treatment_option === "Accept and reduce")) residual_risk_rating = "Low";
+    else residual_risk_rating = risk_rating;
+
+    return residual_risk_rating;
+}
+/**
+ * Update risk_rating and residual_risk_rating in database after create/edit
+ */
 Compliance_Assessment.addHook('beforeSave', (assessment, options) => {
     assessment.risk_rating = calculatedRiskRating(assessment.policy, assessment.procedures, assessment.data);
+    assessment.residual_risk_rating = calculatedResidualRisk(assessment.risk_rating, assessment.treatment_option);
 });
 /**
  * Adding resources to Admin Bro
@@ -365,6 +376,7 @@ const run = async () => {
                             { value: 'Satisfactory', label: 'Satisfactory' },
                             { value: 'Poor', label: 'Poor' },
                         ],
+                        isVisible: { list: false, show: true, new: true, edit: true }
                     },
                     procedures: {
                         availableValues: [
@@ -372,6 +384,7 @@ const run = async () => {
                             { value: 'Satisfactory', label: 'Satisfactory' },
                             { value: 'Poor', label: 'Poor' },
                         ],
+                        isVisible: { list: false, show: true, new: true, edit: true }
                     },
                     data: {
                         availableValues: [
@@ -379,23 +392,27 @@ const run = async () => {
                             { value: 'Satisfactory', label: 'Satisfactory' },
                             { value: 'Poor', label: 'Poor' },
                         ],
+                        isVisible: { list: false, show: true, new: true, edit: true }
                     },
-                    risk_rating: {
-                        isVisible: { list: false, show: true, new: false, edit: false }
-                    }
-                }}
-            }, {
-                resource: Risk_Treatment,
-                options: { properties: {
-                    option: {
+                    treatment_option: {
                         availableValues: [
                             { value: 'Avoid', label: 'Avoid' },
                             { value: 'Accept and reduce', label: 'Accept and reduce' },
                             { value: 'Reduce and monitor', label: 'Reduce and monitor' },
                         ],
+                        isVisible: { list: true, show: true, new: false, edit: true },
                     },
+                    risk_rating: {
+                        isVisible: { list: true, show: true, new: false, edit: false },
+                    },
+                    residual_risk_rating: {
+                        isVisible: { list: true, show: true, new: false, edit: false },
+                    },
+                    treatment_description: {
+                        isVisible: { list: false, show: true, new: false, edit: true },
+                    }
                 }}
-            },{
+            }, {
                 resource: Standard_Policy,
             }, {
                 resource: Standard_Risk_Driver,
