@@ -93,6 +93,7 @@ const Compliance_Assessment = sequelize.define('compliance_assessments', {
     policy: { type: DataTypes.STRING },
     procedures: { type: DataTypes.STRING },
     data: { type: DataTypes.STRING },
+    risk_rating: { type: DataTypes.STRING },
 }, {
     underscored: true
 });
@@ -207,6 +208,29 @@ Standard.belongsToMany(Improvement_Framework, { through: Standard_Improvement_Fr
 Improvement_Framework.belongsToMany(Standard, { through: Standard_Improvement_Framework });
 
 /**
+ * Calculate Risk Rating
+ */
+const calculatedRiskRating = (policyRating, procedureRating, dataRating) => {
+    let mark = {
+        "Good": 3,
+        "Satisfactory": 2,
+        "Poor": 1
+    };
+
+    let input = [policyRating, procedureRating, dataRating];
+    let sum = 0;
+    input.forEach((rating) => {
+        sum += mark[rating];
+    });
+
+    if (sum >= 7) return "Low";
+    else if (sum >= 5 && sum <= 6) return "Medium";
+    else return "High";
+};
+Compliance_Assessment.addHook('beforeSave', (assessment, options) => {
+    assessment.risk_rating = calculatedRiskRating(assessment.policy, assessment.procedures, assessment.data);
+});
+/**
  * Adding resources to Admin Bro
  */
 const run = async () => {
@@ -245,6 +269,9 @@ const run = async () => {
                             {value: 'Y', label: 'Yes'},
                             {value: 'N', label: 'No'},
                         ],
+                    },
+                    standard: {
+                        isTitle: true
                     }
                 }}
             }, {
@@ -353,6 +380,9 @@ const run = async () => {
                             { value: 'Poor', label: 'Poor' },
                         ],
                     },
+                    risk_rating: {
+                        isVisible: { list: false, show: true, new: false, edit: false }
+                    }
                 }}
             }, {
                 resource: Risk_Treatment,
