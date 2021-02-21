@@ -186,7 +186,6 @@ const Standard_Improvement_Framework = sequelize.define('standard_improvement_fr
  * Define relationship between entities
  */
 Compliance_Assessment.belongsTo(Standard); // one to one
-Compliance_Assessment.belongsTo(Risk_Driver); // one to one 
 // many to many
 Standard.belongsToMany(Policy, { through: Standard_Policy });
 Policy.belongsToMany( Standard, { through: Standard_Policy });
