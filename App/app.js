@@ -108,14 +108,12 @@ const Standard_Policy = sequelize.define('standard_policies', {
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-            key: 'id'
         }
     },
     PolicyId: {
         type: DataTypes.INTEGER,
         references: {
             model: Policy,
-            key: 'id'
         },
     }
 }, {
@@ -129,14 +127,12 @@ const Standard_Risk_Driver = sequelize.define('standard_risk_drivers', {
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-            key: 'id'
         }
     },
     RiskDriverId: {
         type: DataTypes.INTEGER,
         references: {
             model: Risk_Driver,
-            key: 'id'
         }
     }
 }, {
@@ -150,14 +146,12 @@ const Standard_Assessment_Framework = sequelize.define('standard_assessment_fram
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-            key: 'id'
         }
     },
     AssessmentFrameworkId: {
         type: DataTypes.INTEGER,
         references: {
             model: Assessment_Framework,
-            key: 'id'
         }
     }
 }, {
@@ -171,33 +165,21 @@ const Standard_Improvement_Framework = sequelize.define('standard_improvement_fr
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-            key: 'id'
         }
     },
     ImprovementFrameworkId: {
         type: DataTypes.INTEGER,
         references: {
             model: Improvement_Framework,
-            key: 'id'
         }
     }
+}, {
+    underscored: true
 });
 /**
  * Define relationship between entities
  */
 Compliance_Assessment.belongsTo(Standard); // one to one
-// many to many
-Standard.belongsToMany(Policy, { through: Standard_Policy });
-Policy.belongsToMany( Standard, { through: Standard_Policy });
-
-Standard.belongsToMany(Risk_Driver, { through: Standard_Risk_Driver });
-Risk_Driver.belongsToMany(Standard, { through: Standard_Risk_Driver });
-
-Standard.belongsToMany(Assessment_Framework, { through: Standard_Assessment_Framework });
-Assessment_Framework.belongsToMany(Standard, { through: Standard_Assessment_Framework });
-
-Standard.belongsToMany(Improvement_Framework, { through: Standard_Improvement_Framework });
-Improvement_Framework.belongsToMany(Standard, { through: Standard_Improvement_Framework });
 
 /**
  * Calculate Risk Rating
