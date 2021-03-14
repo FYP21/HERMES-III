@@ -1,3 +1,4 @@
+const moment = require('moment');
 /**
  * Connecting to Database using Sequelize, start app
  */
@@ -77,15 +78,20 @@ const Policy = sequelize.define('policies', {
     pmm_ref: { type: DataTypes.INTEGER },
     title: { type: DataTypes.STRING },
     version: { type: DataTypes.INTEGER },
-    date_approved: { type: DataTypes.DATE },
-    review_interval: { type: DataTypes.INTEGER },
-    specified_review_date: { type: DataTypes.DATE },
     last_reviewed: { type: DataTypes.DATE },
-    last_modified: { type: DataTypes.DATE },
-    next_review: { type: DataTypes.DATE }
 }, {
     underscored: true
 });
+const Review = sequelize.define('reviews', {
+    date_approved: { type: DataTypes.DATE },
+    review_interval: { type: DataTypes.INTEGER },
+    specified_review_date: { type: DataTypes.DATE },
+    reviewed_date: { type: DataTypes.DATE },
+    next_review: { type: DataTypes.DATE },
+    status: { type: DataTypes.STRING }
+}, {
+    underscored: true
+})
 /**
  * Define Compliance Assessment resource
  */
@@ -179,7 +185,10 @@ const Standard_Improvement_Framework = sequelize.define('standard_improvement_fr
 /**
  * Define relationship between entities
  */
-Compliance_Assessment.belongsTo(Standard); // one to one
+Compliance_Assessment.belongsTo(Standard); //one to one
+// one to many
+Policy.hasMany(Review);
+Review.belongsTo(Policy);
 
 /**
  * Calculate Risk Rating
@@ -224,6 +233,95 @@ const calculatedResidualRisk = (risk_rating, treatment_option) => {
 Compliance_Assessment.addHook('beforeSave', (assessment, options) => {
     assessment.risk_rating = calculatedRiskRating(assessment.policy, assessment.procedures, assessment.data);
     assessment.residual_risk_rating = calculatedResidualRisk(assessment.risk_rating, assessment.treatment_option);
+});
+/**
+ * Increase version by 1 after edit the policy
+ */
+Policy.addHook('beforeUpdate', (policy, options) => {
+    let oldTitle = policy._previousDataValues.title;
+    let currentTitle = policy.dataValues.title;
+    let oldPmm_ref = policy._previousDataValues.pmm_ref.toString();
+    let currentPmm_ref = policy.dataValues.pmm_ref;
+    let oldCategory = policy._previousDataValues.category;
+    let currentCategory = policy.dataValues.category;
+    let oldTheme = policy._previousDataValues.theme;
+    let currentTheme = policy.dataValues.theme;
+    if (
+        (currentTitle !== oldTitle) ||
+        (currentPmm_ref !== oldPmm_ref) ||
+        (currentCategory !== oldCategory) ||
+        (currentTheme !== oldTheme)
+    ) policy.version = parseInt(policy.version) + 1;
+
+    console.log(policy);
+});
+/**
+ * Update date after X months
+ * @param {date} date
+ * @param {number} months
+ * @returns after X months date
+ */
+function addMonths(date, months) {
+    var d = date.getDate();
+    date.setMonth(date.getMonth() + months);
+    if (date.getDate() != d) {
+      date.setDate(0);
+    }
+    return date;
+}
+/**
+ * Compare 2 dates
+ * @param {date} date1
+ * @param {date} date2
+ * @returns {number} 1: date1 > date2|-1: date1 < date2|0: date1 = date2
+ */
+function compare_dates(date1,date2) {
+    if (date1>date2) return (1);
+  else if (date1<date2) return (-1);
+  else return (0);
+ }
+/**
+ * Calcuate next_review and update review status before new/edit action
+ */
+Review.addHook('beforeSave', (review, options) => {
+    let today = moment().toDate();
+    console.log(review);
+    console.log(today);
+
+    // Update review status field
+    if (compare_dates(today, review.specified_review_date) === 1) review.status = "Overdue";
+    else if (!review.reviewed_date && compare_dates(today, review.specified_review_date) === 1) review.status = "Overdue";
+    else if (
+        review.reviewed_date &&
+        compare_dates(today, review.specified_review_date) === -1 ||
+        compare_dates(today, review.specified_review_date) === 0
+    ) review.status = "Complete";
+    else review.status = "Pending";
+
+    // Update next_review field
+    let newDate = new Date(review.specified_review_date.toString());
+    review.next_review = newDate;
+    review.next_review = addMonths(review.next_review, parseInt(review.review_interval));
+
+    //Update last_reviewd in Policy
+    if (review.reviewed_date) {
+        Policy.update(
+        { last_reviewed: review.reviewed_date },
+        { where: { id: review.policyId } }
+      )
+    }
+});
+/**
+ * Create new review after save if status is overdue or complete
+ */
+Review.addHook('afterSave', async (review, options) => {
+    if (review.dataValues.status === "Overdue" || review.dataValues.status === "Complete") {
+        const nextReview = await Review.create({
+            policyId: review.dataValues.policyId,
+            specified_review_date: review.dataValues.next_review,
+            review_interval: review.dataValues.review_interval
+        });
+    }
 });
 /**
  * Adding resources to Admin Bro
@@ -350,6 +448,35 @@ const run = async () => {
                             { value: 'Dictionary of Terminology (Document Type)', label: 'Dictionary of Terminology (Document Type)' },
                         ],
                     },
+                    last_reviewed: {
+                        isVisible: { list: true, show: true, new: false, edit: false }
+                    },
+                    version: {
+                        isVisible: { list: true, show: true, new: false, edit: false }
+                    }
+                }}
+            }, {
+                resource: Review,
+                options: { properties: {
+                    reviewed_date: {
+                        isVisible: { list: true, show: true, new: false, edit: true}
+                    },
+                    date_approved: {
+                        isVisible: { list: true, show: true, new: false, edit: true}
+                    },
+                    next_review: {
+                        isVisible: { list: true, show: true, new: false, edit: false}
+                    },
+                    status: {
+                        isVisible: { list: true, show: true, new: false, edit: false}
+                    },
+                    review_interval: {
+                        availableValues: [
+                            { value: 36, label: 36 },
+                            { value: 24, label: 24 },
+                            { value: 12, label: 12 }
+                        ]
+                    }
                 }}
             }, {
                 resource: Compliance_Assessment,
