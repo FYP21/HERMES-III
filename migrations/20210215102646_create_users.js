@@ -5,6 +5,7 @@ exports.up = function(knex) {
         table.string('name');
         table.string('email');
         table.string('password');
+        table.string('encrypted_password');
         table.string('role');
         table.timestamps();
       });
