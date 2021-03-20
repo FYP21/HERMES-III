@@ -10,7 +10,7 @@ const AdminBroSequelize = require('@admin-bro/sequelize');
 
 const bcrypt = require('bcrypt')
 
-const sequelize = new Sequelize('postgres://postgres:preya@localhost:5432/murdoch_fyp');
+const sequelize = new Sequelize('postgres://trambui:@localhost:5432/murdoch_fyp');
 AdminBro.registerAdapter(AdminBroSequelize);
 
 const express = require('express');
@@ -22,7 +22,7 @@ const contentParent = {
 }
 
 const isAdmin = ({ currentAdmin }) =>{
-  if (currentAdmin && currentAdmin.role === 'admin')
+  if (currentAdmin && currentAdmin.role === 'Admin')
     return true;
   return false;
 }
@@ -346,99 +346,91 @@ const run = async () => {
         resources: [
             {
                 resource: User, 
-                options: { 
+                options: {
 					parent: contentParent,
-					
-					  properties: {
-          name: { 
-            isVisible: { 
-              list: true,
-              filter: true, 
-              show: true, 
-              edit: true 
-            }, 
-            position: -1    //set position of a column in list => -1, 100 ...
-          },
-          email: { 
-            isVisible: { 
-              list: true, 
-              filter: true, 
-              show: true, 
-              edit: true
-            }
-          },
-          encrypted_password: { 
-            isVisible: { 
-              list: false, 
-              filter: false, 
-              show: false, 
-              edit: false
-            },
-            // type: 'richtext'
-          },
-          password: {
-            type: 'password',
-            isVisible: {
-              list: false,
-              filter: false,
-              show: false,
-              edit: true
-            }
-          },
-        },
-						actions: {
-							 new: { isAccessible: isAdmin },
-							 new: {
-								before: async (request) => {
-								  console.log(request.payload);
-								  if (request.payload.password){
-									
-									request.payload = {
-									  ...request.payload,
-									  encrypted_password: await bcrypt.hash(request.payload.password, 10),
-									  password: undefined
-									}
-								  }
+					properties: {
+                        name: {
+                            isVisible: {
+                                list: true,
+                                filter: true, 
+                                show: true, 
+                                edit: true 
+                            },
+                            position: -1    //set position of a column in list => -1, 100 ...
+                        },
+                        email: {
+                            isVisible: {
+                                list: true,
+                                filter: true,
+                                show: true,
+                                edit: true
+                            }
+                        },
+                        encrypted_password: {
+                            isVisible: {
+                                list: false,
+                                filter: false,
+                                show: false,
+                                edit: false
+                            },
+                            // type: 'richtext'
+                        },
+                        role: {
+                            availableValues: [
+                                { value: 'User', label: 'User' },
+                                { value: 'Admin', label: 'Admin' }
+                            ],
+                        },
+                    },
+                    actions: {
+                        new: { isAccessible: isAdmin },
+                        new: {
+                            before: async (request) => {
+                                console.log(request.payload);
+                                if (request.payload.password){
 
-								  return request
-								},
-							after: async (response) => {
-							  console.log(response)
-							  return response
-							}
-								},
-          edit: {
-            before: async (request) => {
-              console.log(request.payload);
-              if (request.payload.password){
-                
-                request.payload = {
-                  ...request.payload,
-                  encrypted_password: await bcrypt.hash(request.payload.password, 10),
-                  password: undefined
-                }
-              }
+                                request.payload = {
+                                    ...request.payload,
+                                    encrypted_password: await bcrypt.hash(request.payload.password, 10),
+                                    password: undefined
+                                    }
+                                }
+                                return request
+                            },
+                            after: async (response) => {
+                                console.log(response)
+                                return response
+                            }
+                        },
+                        edit: {
+                            before: async (request) => {
+                            console.log(request.payload);
+                            if (request.payload.password){
 
-              return request
-            },
+                                request.payload = {
+                                ...request.payload,
+                                encrypted_password: await bcrypt.hash(request.payload.password, 10),
+                                password: undefined
+                                }
+                            }
 
-          },
-
-          edit : {
-            isAccessible: isAdmin
-          },
-          delete: {
-            isAccessible: isAdmin
-          },
-		   
-							show: { 
-								properties: {
-									password: { isVisible: false }
-											},	
-								  }
-						
-								}
-			}
+                            return request
+                            },
+                        },
+                        edit : {
+                            isAccessible: isAdmin
+                        },
+                        delete: {
+                            isAccessible: isAdmin
+                        },
+                        show: {
+                            properties: {
+                                password: { isVisible: false }
+                                        },
+                                }
+                    
+                    }
+			    }
             }, {
                 resource: Standard, 
                 options: { properties: {
