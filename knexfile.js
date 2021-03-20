@@ -3,12 +3,7 @@
 module.exports = {
   development: {
     client: 'postgresql',
-    connection: {
-      database: 'murdoch_fyp',
-      user:     'trambui',
-      password: '',
-      host: 'localhost'
-    }
+    connection: process.env.DATABASE_URL
   },
 
   staging: {
