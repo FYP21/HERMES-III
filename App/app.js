@@ -383,8 +383,8 @@ const run = async () => {
                         },
                     },
                     actions: {
-                        new: { isAccessible: isAdmin },
                         new: {
+                            isAccessible: isAdmin,
                             before: async (request) => {
                                 console.log(request.payload);
                                 if (request.payload.password){
@@ -403,6 +403,7 @@ const run = async () => {
                             }
                         },
                         edit: {
+                            isAccessible: isAdmin,
                             before: async (request) => {
                             console.log(request.payload);
                             if (request.payload.password){
@@ -417,18 +418,14 @@ const run = async () => {
                             return request
                             },
                         },
-                        edit : {
-                            isAccessible: isAdmin
-                        },
                         delete: {
                             isAccessible: isAdmin
                         },
                         show: {
                             properties: {
                                 password: { isVisible: false }
-                                        },
-                                }
-                    
+                            },
+                        }
                     }
 			    }
             }, {
