@@ -1,3 +1,4 @@
+require('dotenv').config();
 const moment = require('moment');
 /**
  * Connecting to Database using Sequelize, start app
@@ -7,14 +8,14 @@ const AdminBro = require('admin-bro')
 const AdminBroExpress = require('@admin-bro/express');
 const { Sequelize, DataTypes } = require('sequelize');
 const AdminBroSequelize = require('@admin-bro/sequelize');
-
 const bcrypt = require('bcrypt')
+const sequelize = new Sequelize(process.env.DATABASE_URL);
 
-const sequelize = new Sequelize('postgres://trambui:@localhost:5432/murdoch_fyp');
 AdminBro.registerAdapter(AdminBroSequelize);
 
 const express = require('express');
 const app = express();
+const port = process.env.PORT || 8080;
 
 const contentParent = {
   name: 'Users',
@@ -653,9 +654,8 @@ const run = async () => {
     resave: false,
     saveUninitialized: true,
 })
-
     app.use(adminBro.options.rootPath, router)
     app.use(express.static('public'))
-    app.listen(8080, () => console.log('AdminBro is under localhost:8080/admin'))
+    app.listen(port, () => console.log(`AdminBro is under localhost:${port}/admin`))
 };
 run();

@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "@admin-bro/express": "^3.1.0",
+    "@admin-bro/sequelize": "^1.2.1",
+    "admin-bro": "^3.4.0",
+    "bcrypt": "^5.0.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-formidable": "^1.2.0",
+    "knex": "^0.21.17",
+    "moment": "^2.29.1",
+    "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
+    "sequelize": "^6.5.0",
+    "tslib": "^2.1.0"
+  },
+  "name": "database",
+  "version": "1.0.0",
+  "main": "knexfile.js",
+  "engines": {
+    "npm": "7.x"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node App/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
