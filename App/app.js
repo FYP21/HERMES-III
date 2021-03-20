@@ -8,11 +8,24 @@ const AdminBroExpress = require('@admin-bro/express');
 const { Sequelize, DataTypes } = require('sequelize');
 const AdminBroSequelize = require('@admin-bro/sequelize');
 
-const sequelize = new Sequelize('postgres://trambui:@localhost:5432/murdoch_fyp');
+const bcrypt = require('bcrypt')
+
+const sequelize = new Sequelize('postgres://postgres:preya@localhost:5432/murdoch_fyp');
 AdminBro.registerAdapter(AdminBroSequelize);
 
 const express = require('express');
 const app = express();
+
+const contentParent = {
+  name: 'Users',
+  icon: 'User',
+}
+
+const isAdmin = ({ currentAdmin }) =>{
+  if (currentAdmin && currentAdmin.role === 'admin')
+    return true;
+  return false;
+}
 
 /**
  * Define User resource
@@ -21,6 +34,7 @@ const User = sequelize.define('users', {
     name: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
+    encrypted_password: { type: DataTypes.STRING },
     role: { type: DataTypes.STRING },
 },{
     underscored: true
@@ -332,11 +346,99 @@ const run = async () => {
         resources: [
             {
                 resource: User, 
-                options: { actions: {
-                    show: { properties: {
-                        password: { isVisible: false }
-                    }}
-                }}
+                options: { 
+					parent: contentParent,
+					
+					  properties: {
+          name: { 
+            isVisible: { 
+              list: true,
+              filter: true, 
+              show: true, 
+              edit: true 
+            }, 
+            position: -1    //set position of a column in list => -1, 100 ...
+          },
+          email: { 
+            isVisible: { 
+              list: true, 
+              filter: true, 
+              show: true, 
+              edit: true
+            }
+          },
+          encrypted_password: { 
+            isVisible: { 
+              list: false, 
+              filter: false, 
+              show: false, 
+              edit: false
+            },
+            // type: 'richtext'
+          },
+          password: {
+            type: 'password',
+            isVisible: {
+              list: false,
+              filter: false,
+              show: false,
+              edit: true
+            }
+          },
+        },
+						actions: {
+							 new: { isAccessible: isAdmin },
+							 new: {
+								before: async (request) => {
+								  console.log(request.payload);
+								  if (request.payload.password){
+									
+									request.payload = {
+									  ...request.payload,
+									  encrypted_password: await bcrypt.hash(request.payload.password, 10),
+									  password: undefined
+									}
+								  }
+
+								  return request
+								},
+							after: async (response) => {
+							  console.log(response)
+							  return response
+							}
+								},
+          edit: {
+            before: async (request) => {
+              console.log(request.payload);
+              if (request.payload.password){
+                
+                request.payload = {
+                  ...request.payload,
+                  encrypted_password: await bcrypt.hash(request.payload.password, 10),
+                  password: undefined
+                }
+              }
+
+              return request
+            },
+
+          },
+
+          edit : {
+            isAccessible: isAdmin
+          },
+          delete: {
+            isAccessible: isAdmin
+          },
+		   
+							show: { 
+								properties: {
+									password: { isVisible: false }
+											},	
+								  }
+						
+								}
+			}
             }, {
                 resource: Standard, 
                 options: { properties: {
@@ -534,14 +636,35 @@ const run = async () => {
             }
         ],
         rootPath: '/admin',
+		logoutPath: '/admin/logout',
         branding: {
             companyName: 'HERMES III',
             logo: '/Murdoch_logo.png'
         },
     });
 
-    const router = AdminBroExpress.buildRouter(adminBro)
-    
+    const router = AdminBroExpress.buildAuthenticatedRouter(adminBro, {
+	authenticate: async (email, password) => {
+    const user = await User.findOne({where:{email: email}});
+    if (user){
+		
+      const MatchedEntry = await bcrypt.compare(password, user.encrypted_password);
+	  if (MatchedEntry==true){
+        return user; 
+      }
+	  else
+	  {console.log('Entry denied');
+		return false;}
+    }
+    return false
+  },
+  cookieName: process.env.ADMIN_COOKIE_NAME || 'adminbro',
+  cookiePassword: process.env.ADMIN_COOKIE_PASS || 'somePassword',
+},null,{
+    resave: false,
+    saveUninitialized: true,
+})
+
     app.use(adminBro.options.rootPath, router)
     app.use(express.static('public'))
     app.listen(8080, () => console.log('AdminBro is under localhost:8080/admin'))
