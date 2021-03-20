@@ -649,10 +649,12 @@ const run = async () => {
     if (user){
 		
       const MatchedEntry = await bcrypt.compare(password, user.encrypted_password);
-	  console.log(MatchedEntry);
-	    if (user){
+	  if (MatchedEntry==true){
         return user; 
       }
+	  else
+	  {console.log('Entry denied');
+		return false;}
     }
     return false
   },
