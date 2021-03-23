@@ -1,0 +1,6 @@
+{
+    "name": "hermes-iii",
+    "description": "Final year project 2021",
+    "repository": "https://github.com/FYP21/HERMES-III.git",
+    "keywords": ["node", "express", "static"]
+  }

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const moment = require('moment');
 /**
  * Connecting to Database using Sequelize, start app
@@ -7,12 +8,20 @@ const AdminBro = require('admin-bro')
 const AdminBroExpress = require('@admin-bro/express');
 const { Sequelize, DataTypes } = require('sequelize');
 const AdminBroSequelize = require('@admin-bro/sequelize');
+const bcrypt = require('bcrypt')
+const sequelize = new Sequelize(process.env.DATABASE_URL);
 
-const sequelize = new Sequelize('postgres://trambui:@localhost:5432/murdoch_fyp');
 AdminBro.registerAdapter(AdminBroSequelize);
 
 const express = require('express');
 const app = express();
+const port = process.env.PORT || 8080;
+
+const isAdmin = ({ currentAdmin }) =>{
+  if (currentAdmin && currentAdmin.role === 'Admin')
+    return true;
+  return false;
+}
 
 /**
  * Define User resource
@@ -21,6 +30,7 @@ const User = sequelize.define('users', {
     name: { type: DataTypes.STRING },
     email: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING },
+    encrypted_password: { type: DataTypes.STRING },
     role: { type: DataTypes.STRING },
 },{
     underscored: true
@@ -311,6 +321,27 @@ Review.addHook('beforeSave', (review, options) => {
       )
     }
 });
+
+/**
+ * Organize navigation bar by groups
+ */
+const users = {
+    name: 'Users',
+    icon: 'User',
+}
+const associations = {
+    name: 'Associations',
+    icon: 'Link',
+}
+const resources = {
+    name: 'Resources',
+    icon: 'Component',
+}
+const assessments = {
+    name: 'Assessments',
+    icon: 'Edit',
+}
+
 /**
  * Create new review after save if status is overdue or complete
  */
@@ -332,218 +363,341 @@ const run = async () => {
         resources: [
             {
                 resource: User, 
-                options: { actions: {
-                    show: { properties: {
-                        password: { isVisible: false }
-                    }}
-                }}
+                options: {
+					parent: users,
+					properties: {
+                        name: {
+                            isVisible: {
+                                list: true,
+                                filter: true, 
+                                show: true, 
+                                edit: true 
+                            },
+                            position: -1    //set position of a column in list => -1, 100 ...
+                        },
+                        email: {
+                            isVisible: {
+                                list: true,
+                                filter: true,
+                                show: true,
+                                edit: true
+                            }
+                        },
+                        encrypted_password: {
+                            isVisible: {
+                                list: false,
+                                filter: false,
+                                show: false,
+                                edit: false
+                            },
+                            // type: 'richtext'
+                        },
+                        role: {
+                            availableValues: [
+                                { value: 'User', label: 'User' },
+                                { value: 'Admin', label: 'Admin' }
+                            ],
+                        },
+                    },
+                    actions: {
+                        new: {
+                            isAccessible: isAdmin,
+                            before: async (request) => {
+                                console.log(request.payload);
+                                if (request.payload.password){
+
+                                request.payload = {
+                                    ...request.payload,
+                                    encrypted_password: await bcrypt.hash(request.payload.password, 10),
+                                    password: undefined
+                                    }
+                                }
+                                return request
+                            },
+                            after: async (response) => {
+                                console.log(response)
+                                return response
+                            }
+                        },
+                        edit: {
+                            isAccessible: isAdmin,
+                            before: async (request) => {
+                            console.log(request.payload);
+                            if (request.payload.password){
+
+                                request.payload = {
+                                ...request.payload,
+                                encrypted_password: await bcrypt.hash(request.payload.password, 10),
+                                password: undefined
+                                }
+                            }
+
+                            return request
+                            },
+                        },
+                        delete: {
+                            isAccessible: isAdmin
+                        },
+                        show: {
+                            properties: {
+                                password: { isVisible: false }
+                            },
+                        }
+                    }
+			    }
             }, {
                 resource: Standard, 
-                options: { properties: {
-                    domain: {
-                        availableValues: [
-                            { value: 'Student Participation and Attainment', label: 'Student Participation and Attainment' },
-                            { value: 'Learning Environment', label: 'Learning Environment' },
-                            { value: 'Teaching', label: 'Teaching' },
-                            { value: 'Research and Research Training', label: 'Research and Research Training' },
-                            { value: 'Institutional Quality Assurance', label: 'Institutional Quality Assurance' },
-                            { value: 'Governance and Accountability', label: 'Governance and Accountability' },
-                            { value: 'Representation, Information and Information Management', label: 'Representation, Information and Information Management' }
-                        ],
-                    },
-                    core: { 
-                        availableValues: [
-                            {value: 'Y', label: 'Yes'},
-                            {value: 'N', label: 'No'},
-                        ],
-                    },
-                    cs: {
-                        availableValues: [
-                            {value: 'Y', label: 'Yes'},
-                            {value: 'N', label: 'No'},
-                        ],
-                    },
-                    standard: {
-                        isTitle: true
-                    }
-                }}
+                options: {
+                    parent: resources,
+                    properties: {
+                        domain: {
+                            availableValues: [
+                                { value: 'Student Participation and Attainment', label: 'Student Participation and Attainment' },
+                                { value: 'Learning Environment', label: 'Learning Environment' },
+                                { value: 'Teaching', label: 'Teaching' },
+                                { value: 'Research and Research Training', label: 'Research and Research Training' },
+                                { value: 'Institutional Quality Assurance', label: 'Institutional Quality Assurance' },
+                                { value: 'Governance and Accountability', label: 'Governance and Accountability' },
+                                { value: 'Representation, Information and Information Management', label: 'Representation, Information and Information Management' }
+                            ],
+                        },
+                        core: { 
+                            availableValues: [
+                                {value: 'Y', label: 'Yes'},
+                                {value: 'N', label: 'No'},
+                            ],
+                        },
+                        cs: {
+                            availableValues: [
+                                {value: 'Y', label: 'Yes'},
+                                {value: 'N', label: 'No'},
+                            ],
+                        },
+                        standard: {
+                            isTitle: true
+                        }
+                    }}
             }, {
-                resource: Risk_Driver, 
-                options: { properties: {
-                    sub_category: {
-                        isTitle: true,
-                    },
-                    category: { 
-                        availableValues: [
-                            { value: 'Strategic', label: 'Strategic' },
-                            { value: 'External', label: 'External' },
-                            { value: 'Financial', label: 'Financial' },
-                            { value: 'Operational', label: 'Operational' },
-                            { value: 'People', label: 'People' },
-                            { value: 'Governance', label: 'Governance' },
-                        ],
-                    },
-                }}
+                resource: Risk_Driver,
+                options: {
+                    parent: resources,
+                    properties: {
+                        sub_category: {
+                            isTitle: true,
+                        },
+                        category: { 
+                            availableValues: [
+                                { value: 'Strategic', label: 'Strategic' },
+                                { value: 'External', label: 'External' },
+                                { value: 'Financial', label: 'Financial' },
+                                { value: 'Operational', label: 'Operational' },
+                                { value: 'People', label: 'People' },
+                                { value: 'Governance', label: 'Governance' },
+                            ],
+                        },
+                    }}
             }, {
                 resource: Assessment_Framework,
-                options: { properties: {
-                    sub_category: {
-                        isTitle: true,
-                    },
-                    category: {
-                        availableValues: [
-                            { value: 'Student Profile and Outcomes', label: 'Student Profile and Outcomes' },
-                            { value: 'Staff Resources and Profile', label: 'Staff Resources and Profile' },
-                            { value: 'Financial Viability and Sustainability', label: 'Financial Viability and Sustainability' },
-                            { value: 'Provider Specific', label: 'Provider Specific' },
-                        ],
-                    },
-                }}
+                options: {
+                    parent: resources,
+                        properties: {
+                        sub_category: {
+                            isTitle: true,
+                        },
+                        category: {
+                            availableValues: [
+                                { value: 'Student Profile and Outcomes', label: 'Student Profile and Outcomes' },
+                                { value: 'Staff Resources and Profile', label: 'Staff Resources and Profile' },
+                                { value: 'Financial Viability and Sustainability', label: 'Financial Viability and Sustainability' },
+                                { value: 'Provider Specific', label: 'Provider Specific' },
+                            ],
+                        },
+                    }}
             }, {
                 resource: Improvement_Framework,
-                options: { properties: {
-                    category: {
-                        isTitle: true,
-                    },
-                    theme: {
-                        availableValues: [
-                            { value: 'Design', label: 'Design' },
-                            { value: 'Support', label: 'Support' },
-                            { value: 'Delivery', label: 'Delivery' },
-                            { value: 'Performance', label: 'Performance' },
-                        ],
-                    },
-                }}
+                options: {
+                    parent: resources,
+                        properties: {
+                        category: {
+                            isTitle: true,
+                        },
+                        theme: {
+                            availableValues: [
+                                { value: 'Design', label: 'Design' },
+                                { value: 'Support', label: 'Support' },
+                                { value: 'Delivery', label: 'Delivery' },
+                                { value: 'Performance', label: 'Performance' },
+                            ],
+                        },
+                    }}
             }, {
                 resource: Policy,
-                options: { properties: {
-                    theme: {
-                        availableValues: [
-                            { value: 'Community & Development', label: 'Community & Development' },
-                            { value: 'Finance, Purchasing & Insurance', label: 'Finance, Purchasing & Insurance' },
-                            { value: 'Governance', label: 'Governance' },
-                            { value: 'Learning & Teaching', label: 'Learning & Teaching' },
-                            { value: 'People & Culture', label: 'People & Culture' },
-                            { value: 'Physical Facilities', label: 'Physical Facilities' },
-                            { value: 'GovernHealth, Safety & Environmentance', label: 'Health, Safety & Environment' },
-                            { value: 'Information Technology', label: 'Information Technology' },
-                            { value: 'Student Experience', label: 'Student Experience' },
-                            { value: 'The Animal Hospital', label: 'The Animal Hospital' },
-                            { value: 'Research', label: 'Research' },
-                        ],
-                    },
-                    category: {
-                        availableValues: [
-                            { value: 'Policy (Document Type)', label: 'Policy (Document Type)' },
-                            { value: 'Procedure (Document Type)', label: 'Procedure (Document Type)' },
-                            { value: 'Guideline (Document Type)', label: 'Guideline (Document Type)' },
-                            { value: 'Standard (Document Type)', label: 'Standard (Document Type)' },
-                            { value: 'Regulations (Document Type)', label: 'Regulations (Document Type)' },
-                            { value: 'Statutes (Document Type)', label: 'Statutes (Document Type)' },
-                            { value: 'Rule (Document Type)', label: 'Rule (Document Type)' },
-                            { value: 'ByLaw (Document Type)', label: 'ByLaw (Document Type)' },
-                            { value: 'Principles/Framework (Document Type)', label: 'Principles/Framework (Document Type)' },
-                            { value: 'Strategy/Plan (Document Type)', label: 'Strategy/Plan (Document Type)' },
-                            { value: 'Code/Charter (Document Type)', label: 'Code/Charter (Document Type)' },
-                            { value: 'Dictionary of Terminology (Document Type)', label: 'Dictionary of Terminology (Document Type)' },
-                        ],
-                    },
-                    last_reviewed: {
-                        isVisible: { list: true, show: true, new: false, edit: false }
-                    },
-                    version: {
-                        isVisible: { list: true, show: true, new: false, edit: false }
-                    }
-                }}
+                options: {
+                    parent: resources,
+                    properties: {
+                        theme: {
+                            availableValues: [
+                                { value: 'Community & Development', label: 'Community & Development' },
+                                { value: 'Finance, Purchasing & Insurance', label: 'Finance, Purchasing & Insurance' },
+                                { value: 'Governance', label: 'Governance' },
+                                { value: 'Learning & Teaching', label: 'Learning & Teaching' },
+                                { value: 'People & Culture', label: 'People & Culture' },
+                                { value: 'Physical Facilities', label: 'Physical Facilities' },
+                                { value: 'GovernHealth, Safety & Environmentance', label: 'Health, Safety & Environment' },
+                                { value: 'Information Technology', label: 'Information Technology' },
+                                { value: 'Student Experience', label: 'Student Experience' },
+                                { value: 'The Animal Hospital', label: 'The Animal Hospital' },
+                                { value: 'Research', label: 'Research' },
+                            ],
+                        },
+                        category: {
+                            availableValues: [
+                                { value: 'Policy (Document Type)', label: 'Policy (Document Type)' },
+                                { value: 'Procedure (Document Type)', label: 'Procedure (Document Type)' },
+                                { value: 'Guideline (Document Type)', label: 'Guideline (Document Type)' },
+                                { value: 'Standard (Document Type)', label: 'Standard (Document Type)' },
+                                { value: 'Regulations (Document Type)', label: 'Regulations (Document Type)' },
+                                { value: 'Statutes (Document Type)', label: 'Statutes (Document Type)' },
+                                { value: 'Rule (Document Type)', label: 'Rule (Document Type)' },
+                                { value: 'ByLaw (Document Type)', label: 'ByLaw (Document Type)' },
+                                { value: 'Principles/Framework (Document Type)', label: 'Principles/Framework (Document Type)' },
+                                { value: 'Strategy/Plan (Document Type)', label: 'Strategy/Plan (Document Type)' },
+                                { value: 'Code/Charter (Document Type)', label: 'Code/Charter (Document Type)' },
+                                { value: 'Dictionary of Terminology (Document Type)', label: 'Dictionary of Terminology (Document Type)' },
+                            ],
+                        },
+                        last_reviewed: {
+                            isVisible: { list: true, show: true, new: false, edit: false }
+                        },
+                        version: {
+                            isVisible: { list: true, show: true, new: false, edit: false }
+                        }
+                    }}
             }, {
                 resource: Review,
-                options: { properties: {
-                    reviewed_date: {
-                        isVisible: { list: true, show: true, new: false, edit: true}
-                    },
-                    date_approved: {
-                        isVisible: { list: true, show: true, new: false, edit: true}
-                    },
-                    next_review: {
-                        isVisible: { list: true, show: true, new: false, edit: false}
-                    },
-                    status: {
-                        isVisible: { list: true, show: true, new: false, edit: false}
-                    },
-                    review_interval: {
-                        availableValues: [
-                            { value: 36, label: 36 },
-                            { value: 24, label: 24 },
-                            { value: 12, label: 12 }
-                        ]
-                    }
-                }}
+                options: {
+                    parent: assessments,
+                    properties: {
+                        reviewed_date: {
+                            isVisible: { list: true, show: true, new: false, edit: true}
+                        },
+                        date_approved: {
+                            isVisible: { list: true, show: true, new: false, edit: true}
+                        },
+                        next_review: {
+                            isVisible: { list: true, show: true, new: false, edit: false}
+                        },
+                        status: {
+                            isVisible: { list: true, show: true, new: false, edit: false}
+                        },
+                        review_interval: {
+                            availableValues: [
+                                { value: 36, label: 36 },
+                                { value: 24, label: 24 },
+                                { value: 12, label: 12 }
+                            ]
+                        }
+                    }}
             }, {
                 resource: Compliance_Assessment,
-                options: { properties: {
-                    policy: { 
-                        availableValues: [
-                            { value: 'Good', label: 'Good' },
-                            { value: 'Satisfactory', label: 'Satisfactory' },
-                            { value: 'Poor', label: 'Poor' },
-                        ],
-                        isVisible: { list: false, show: true, new: true, edit: true }
-                    },
-                    procedures: {
-                        availableValues: [
-                            { value: 'Good', label: 'Good' },
-                            { value: 'Satisfactory', label: 'Satisfactory' },
-                            { value: 'Poor', label: 'Poor' },
-                        ],
-                        isVisible: { list: false, show: true, new: true, edit: true }
-                    },
-                    data: {
-                        availableValues: [
-                            { value: 'Good', label: 'Good' },
-                            { value: 'Satisfactory', label: 'Satisfactory' },
-                            { value: 'Poor', label: 'Poor' },
-                        ],
-                        isVisible: { list: false, show: true, new: true, edit: true }
-                    },
-                    treatment_option: {
-                        availableValues: [
-                            { value: 'Avoid', label: 'Avoid' },
-                            { value: 'Accept and reduce', label: 'Accept and reduce' },
-                            { value: 'Reduce and monitor', label: 'Reduce and monitor' },
-                        ],
-                        isVisible: { list: true, show: true, new: false, edit: true },
-                    },
-                    risk_rating: {
-                        isVisible: { list: true, show: true, new: false, edit: false },
-                    },
-                    residual_risk_rating: {
-                        isVisible: { list: true, show: true, new: false, edit: false },
-                    },
-                    treatment_description: {
-                        isVisible: { list: false, show: true, new: false, edit: true },
-                    }
-                }}
+                options: { 
+                    parent: assessments,
+                    properties: {
+                        policy: { 
+                            availableValues: [
+                                { value: 'Good', label: 'Good' },
+                                { value: 'Satisfactory', label: 'Satisfactory' },
+                                { value: 'Poor', label: 'Poor' },
+                            ],
+                            isVisible: { list: false, show: true, new: true, edit: true }
+                        },
+                        procedures: {
+                            availableValues: [
+                                { value: 'Good', label: 'Good' },
+                                { value: 'Satisfactory', label: 'Satisfactory' },
+                                { value: 'Poor', label: 'Poor' },
+                            ],
+                            isVisible: { list: false, show: true, new: true, edit: true }
+                        },
+                        data: {
+                            availableValues: [
+                                { value: 'Good', label: 'Good' },
+                                { value: 'Satisfactory', label: 'Satisfactory' },
+                                { value: 'Poor', label: 'Poor' },
+                            ],
+                            isVisible: { list: false, show: true, new: true, edit: true }
+                        },
+                        treatment_option: {
+                            availableValues: [
+                                { value: 'Avoid', label: 'Avoid' },
+                                { value: 'Accept and reduce', label: 'Accept and reduce' },
+                                { value: 'Reduce and monitor', label: 'Reduce and monitor' },
+                            ],
+                            isVisible: { list: true, show: true, new: false, edit: true },
+                        },
+                        risk_rating: {
+                            isVisible: { list: true, show: true, new: false, edit: false },
+                        },
+                        residual_risk_rating: {
+                            isVisible: { list: true, show: true, new: false, edit: false },
+                        },
+                        treatment_description: {
+                            isVisible: { list: false, show: true, new: false, edit: true },
+                        }
+                    }}
             }, {
                 resource: Standard_Policy,
+                options: {
+                    parent: associations
+                }
             }, {
                 resource: Standard_Risk_Driver,
+                options: {
+                    parent: associations
+                }
             }, {
                 resource: Standard_Assessment_Framework,
+                options: {
+                    parent: associations
+                }
             }, {
                 resource: Standard_Improvement_Framework,
+                options: {
+                    parent: associations
+                }
             }
         ],
         rootPath: '/admin',
+		logoutPath: '/admin/logout',
         branding: {
             companyName: 'HERMES III',
             logo: '/Murdoch_logo.png'
         },
     });
 
-    const router = AdminBroExpress.buildRouter(adminBro)
-    
+    const router = AdminBroExpress.buildAuthenticatedRouter(adminBro, {
+	authenticate: async (email, password) => {
+    const user = await User.findOne({where:{email: email}});
+    if (user){
+		
+      const MatchedEntry = await bcrypt.compare(password, user.encrypted_password);
+	  if (MatchedEntry==true){
+        return user; 
+      }
+	  else
+	  {console.log('Entry denied');
+		return false;}
+    }
+    return false
+  },
+  cookieName: process.env.ADMIN_COOKIE_NAME || 'adminbro',
+  cookiePassword: process.env.ADMIN_COOKIE_PASS || 'somePassword',
+},null,{
+    resave: false,
+    saveUninitialized: true,
+})
     app.use(adminBro.options.rootPath, router)
     app.use(express.static('public'))
-    app.listen(8080, () => console.log('AdminBro is under localhost:8080/admin'))
+    app.listen(port, () => console.log(`AdminBro is under localhost:${port}/admin`))
 };
 run();
