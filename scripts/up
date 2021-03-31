@@ -3,17 +3,21 @@
 set -eou pipefail
 
 install() {
-  if [[ $(uname) =~ 'Darwin' ]]; then
-    if [ -z $(type -p brew) ]; then
-      xcode-select --install
-      /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-      brew update
-      brew install --cask docker
-    fi
+  local -r pkg=$1
 
+  if [[ $(uname) =~ 'Darwin' ]]; then
+    brew install ${pkg}
   else
     echo "--- Missing required softwares! Please ensure you have docker and docker-compose installed on your machine.\n You can find Docker for Desktop here https://www.docker.com/products/docker-desktop"
     exit 1
+  fi
+}
+
+ensure_brew_is_installed() {
+  if [ -z $(type -p brew) ]; then
+    xcode-select --install
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+    brew update
   fi
 }
 
@@ -25,6 +29,11 @@ check_prerequisite() {
       install "${pkg}"
     fi
   done
+
+  if [ -z "$(brew list --cask | grep docker)" ]; then
+    brew install --cask docker
+    open /Applications/Docker.app/
+  fi
 }
 
 migrate_db() {
@@ -40,14 +49,15 @@ add_host_entry() {
     echo "${host_entry}" | sudo tee -a /etc/hosts > /dev/null
   fi
 
-  readonly green="\e[0;92m"
-  readonly reset="\e[0m"
+  readonly green="\033[0;92m"
+  readonly reset="\033[0m"
 
   echo -e "${green}Access the local site at http://hermesiii.local.dev${reset}"
 }
 
 main() {
   sudo -v
+  ensure_brew_is_installed
   check_prerequisite
 
   docker-compose up -d

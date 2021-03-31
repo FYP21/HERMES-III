@@ -33,12 +33,12 @@ main() {
       "help"|"--help"|"-h" )
         usages
         ;;
-      "up"|"down"|"psql" )
+      "up"|"down"|"psql"|"logs"|"deploy" )
         ./scripts/${opt} $@
         ;;
       * )
-        readonly green="\e[0;92m"
-        readonly reset="\e[0m"
+        readonly green="\033[0;92m"
+        readonly reset="\033[0m"
 
         echo -e "\n${green}Command isn't supported. Please check the usages${reset}\n"
         usages
