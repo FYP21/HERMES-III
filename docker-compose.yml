@@ -1,0 +1,42 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
+    restart: always
+    networks:
+      - h3_network
+    environment:
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_USER: postgres
+      POSTGRES_DB: hermes3_development_db
+      PGDATA: /data
+    volumes:
+      - db-data:/data
+  web:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: h3:latest
+    depends_on:
+      - db
+    networks:
+      - h3_network
+    environment:
+      DATABASE_URL: postgres://postgres:postgres_password@db:5432/hermes3_development_db
+      PORT: 5000
+    ports:
+      - "80:5000"
+    volumes:
+      - ./:/app
+    entrypoint: npm run devStart
+
+volumes:
+  db-data:
+
+networks:
+  h3_network:
+    driver: bridge
