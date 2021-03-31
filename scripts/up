@@ -15,7 +15,7 @@ install() {
 
 ensure_brew_is_installed() {
   if [ -z $(type -p brew) ]; then
-    xcode-select --install
+    xcode-select --install || :
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
     brew update
   fi

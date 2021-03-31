@@ -7,12 +7,18 @@ usages() {
 Hermes is a cli script performs different tasks in HermesIII project development
 
 Available commands
-* up       Start the development environment
-* down     Stop and clean the development environment
-  Options:
-    all    Clean up docker images and containers
-* psql     Interactive connect to psql
-* help     Show command usages
+* up            Start the development environment
+* down          Stop and clean the development environment
+  Arguments:
+    all         Clean up docker images and containers
+* psql          Interactive connect to psql
+* logs          Show service logs
+  Arguments:
+    service     Service name, default to 'web'
+* restore       Restore DB from heroku backup
+  Arguments:
+    dumpfile    Dump file path
+* help          Show command usages
   --help
   -h
 
@@ -21,10 +27,17 @@ Example usages
   ./hermes up
   ./hermes down all
   ./hermes psql
+  ./hermes restore ~/Downloads/backup.dump
+  ./hermes logs web
 EOT
 }
 
 main() {
+  if [ $# == 0 ]; then
+    usages
+    exit 0
+  fi
+  
   while [[ $# -gt 0 ]]; do
     opt=$1
 
@@ -33,7 +46,7 @@ main() {
       "help"|"--help"|"-h" )
         usages
         ;;
-      "up"|"down"|"psql"|"logs"|"deploy" )
+      "up"|"down"|"psql"|"logs"|"deploy"|"restore" )
         ./scripts/${opt} $@
         ;;
       * )

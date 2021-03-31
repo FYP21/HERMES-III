@@ -4,11 +4,7 @@ set -eou pipefail
 
 main() {
   local -r component=${1:-'web'}
-  if [[ $# -gt 0 ]]; then
-    shift
-  fi
-
-  docker-compose logs "$@" "${component}" 
+  docker-compose logs -f "${component}" 
 }
 
 main "$@"

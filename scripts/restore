@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+main() {
+  local -r data_file=$1
+  local -r red='\033[0;31m'
+  local -r reset="\033[0m"
+
+  if [ -z "${data_file}" ]; then
+    echo "${red}Must specify database file${reset}"
+    exit 1
+  fi
+
+  DOCKER_DB_CONTAINER="$(docker-compose ps -q db)"
+
+  export COMPOSE_INTERACTIVE_NO_CLI=1
+  docker exec -e PGPASSWORD=postgres_password -i ${DOCKER_DB_CONTAINER} \
+    pg_restore -C --no-acl --no-owner -h localhost -p 5432 -U postgres -d hermes3_development_db < ${data_file}
+}
+
+main "$@"
