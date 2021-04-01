@@ -78,8 +78,24 @@ const User = sequelize.define('users', {
 const Standard = sequelize.define('standards', {
     core: { type: DataTypes.STRING },
     cs: { type: DataTypes.STRING },
-    domain: { type: DataTypes.STRING },
-    sub_domain: { type: DataTypes.STRING },
+    domain: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Domain cannot be empty"
+            }
+        }
+    },
+    sub_domain: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Sub-domain cannot be empty"
+            }
+        }
+    },
     standard: {
         type: DataTypes.STRING,
         allowNull: false,
