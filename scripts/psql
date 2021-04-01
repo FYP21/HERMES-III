@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+main() {
+  if [ ! -z "$(docker-compose ps -q db)" ]; then
+    docker-compose exec db psql -U postgres -d hermes3_development_db
+  else
+    echo "DB service isn't up, did you run 'scripts/up' yet"
+    exit 1
+  fi
+}
+
+main

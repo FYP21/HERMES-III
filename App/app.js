@@ -8,7 +8,7 @@ const AdminBro = require('admin-bro')
 const AdminBroExpress = require('@admin-bro/express');
 const { Sequelize, DataTypes } = require('sequelize');
 const AdminBroSequelize = require('@admin-bro/sequelize');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const sequelize = new Sequelize(process.env.DATABASE_URL);
 
 AdminBro.registerAdapter(AdminBroSequelize);

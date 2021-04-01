@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+main() {
+  readonly rmi_mode=${1:-}
+
+  if [ "${rmi_mode}" == 'all' ]; then
+    docker-compose down --rmi all
+    docker images | grep 'none' | awk '{print $3}' | xarg docker rmi -f
+  else
+    docker-compose down
+  fi
+}
+
+main "$@"
