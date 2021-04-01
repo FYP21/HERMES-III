@@ -11,6 +11,7 @@ Available commands
 * down          Stop and clean the development environment
   Arguments:
     all         Clean up docker images and containers
+* migrate       Run database migration
 * psql          Interactive connect to psql
 * logs          Show service logs
   Arguments:
@@ -18,6 +19,7 @@ Available commands
 * restore       Restore DB from heroku backup
   Arguments:
     dumpfile    Dump file path
+* deploy        Deploy app to heroku
 * help          Show command usages
   --help
   -h
@@ -46,7 +48,7 @@ main() {
       "help"|"--help"|"-h" )
         usages
         ;;
-      "up"|"down"|"psql"|"logs"|"deploy"|"restore" )
+      "up"|"down"|"psql"|"logs"|"deploy"|"restore"|"migrate" )
         ./scripts/${opt} $@
         ;;
       * )

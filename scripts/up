@@ -60,7 +60,7 @@ main() {
   ensure_brew_is_installed
   check_prerequisite
 
-  docker-compose up -d
+  docker-compose up -d --build
   migrate_db
 
   add_host_entry

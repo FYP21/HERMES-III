@@ -10,6 +10,7 @@ main() {
 
   heroku login
   git push -v heroku main
+  heroku run npm run db:migrate
 }
 
 main
