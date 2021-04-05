@@ -9,7 +9,7 @@ const AdminBroExpress = require('@admin-bro/express');
 const { Sequelize, DataTypes } = require('sequelize');
 const AdminBroSequelize = require('@admin-bro/sequelize');
 const bcrypt = require('bcryptjs')
-const sequelize = new Sequelize(process.env.DATABASE_URL);
+const sequelize = new Sequelize(process.env.DATABASE_URL || "postgres://postgres:preya@localhost:5432/murdoch_fyp");
 
 AdminBro.registerAdapter(AdminBroSequelize);
 
@@ -621,6 +621,9 @@ const run = async () => {
                                 return response
                             }
                         },
+                        list: {
+                            isAccessible: isAdmin
+                        },
                         edit: {
                             isAccessible: isAdmin,
                             before: async (request) => {
@@ -868,6 +871,10 @@ const run = async () => {
         branding: {
             companyName: 'HERMES III',
             logo: '/Murdoch_logo.png'
+        },
+        dashboard: {
+            handler: async () => {},
+            component: AdminBro.bundle('../components/dashboard'),
         },
     });
 
