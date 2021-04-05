@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+usages() {
+  cat <<EOT
+Hermes is a cli script performs different tasks in HermesIII project development
+
+Available commands
+* up            Start the development environment
+* down          Stop and clean the development environment
+  Arguments:
+    all         Clean up docker images and containers
+* migrate       Run database migration
+* psql          Interactive connect to psql
+* logs          Show service logs
+  Arguments:
+    service     Service name, default to 'web'
+* restore       Restore DB from heroku backup
+  Arguments:
+    dumpfile    Dump file path
+* deploy        Deploy app to heroku
+* help          Show command usages
+  --help
+  -h
+
+Example usages
+
+  ./hermes up
+  ./hermes down all
+  ./hermes psql
+  ./hermes restore ~/Downloads/backup.dump
+  ./hermes logs web
+EOT
+}
+
+main() {
+  if [ $# == 0 ]; then
+    usages
+    exit 0
+  fi
+  
+  while [[ $# -gt 0 ]]; do
+    opt=$1
+
+    shift;
+    case "${opt}" in
+      "help"|"--help"|"-h" )
+        usages
+        ;;
+      "up"|"down"|"psql"|"logs"|"deploy"|"restore"|"migrate" )
+        ./scripts/${opt} $@
+        ;;
+      * )
+        readonly green="\033[0;92m"
+        readonly reset="\033[0m"
+
+        echo -e "\n${green}Command isn't supported. Please check the usages${reset}\n"
+        usages
+        exit 1
+        ;;
+    esac
+  done
+}
+
+main "$@"

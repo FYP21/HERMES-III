@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+main() {
+  if [ -z $(type -p heroku) ]; then
+    echo "Heroku cli must be installed first"
+    exit 1
+  fi
+
+  heroku login
+  git push -v heroku main
+  heroku run npm run db:migrate
+}
+
+main

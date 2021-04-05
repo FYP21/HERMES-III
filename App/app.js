@@ -8,7 +8,7 @@ const AdminBro = require('admin-bro')
 const AdminBroExpress = require('@admin-bro/express');
 const { Sequelize, DataTypes } = require('sequelize');
 const AdminBroSequelize = require('@admin-bro/sequelize');
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const sequelize = new Sequelize(process.env.DATABASE_URL);
 
 AdminBro.registerAdapter(AdminBroSequelize);
@@ -27,11 +27,48 @@ const isAdmin = ({ currentAdmin }) =>{
  * Define User resource
  */
 const User = sequelize.define('users', {
-    name: { type: DataTypes.STRING },
-    email: { type: DataTypes.STRING },
-    password: { type: DataTypes.STRING },
-    encrypted_password: { type: DataTypes.STRING },
-    role: { type: DataTypes.STRING },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Name cannot be empty"
+            }
+        }
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            isEmail: {
+                msg: "Email is not valid"
+            },
+            notEmpty: {
+                msg: "Email cannot be empty"
+            }
+        }
+    },
+    password: {
+        type: DataTypes.VIRTUAL,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Password cannot be empty"
+            },
+            len: {
+                args: [6,10],
+                msg: "Password must be of 6-10 characters length"
+            }
+        }
+    },
+    encrypted_password: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    role: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
 },{
     underscored: true
 });
@@ -41,9 +78,33 @@ const User = sequelize.define('users', {
 const Standard = sequelize.define('standards', {
     core: { type: DataTypes.STRING },
     cs: { type: DataTypes.STRING },
-    domain: { type: DataTypes.STRING },
-    sub_domain: { type: DataTypes.STRING },
-    standard: { type: DataTypes.STRING },
+    domain: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Domain cannot be empty"
+            }
+        }
+    },
+    sub_domain: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Sub-domain cannot be empty"
+            }
+        }
+    },
+    standard: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Standard cannot be empty"
+            }
+        }
+    },
 }, {
     underscored: true
 });
@@ -51,9 +112,33 @@ const Standard = sequelize.define('standards', {
  * Define Risk Driver resource
  */
 const Risk_Driver = sequelize.define('risk_drivers', {
-    category: { type: DataTypes.STRING },
-    sub_category: { type: DataTypes.STRING },
-    definition: { type: DataTypes.STRING },
+    category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Category cannot be empty"
+            }
+        }
+    },
+    sub_category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Sub-category cannot be empty"
+            }
+        }
+    },
+    definition: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Definition cannot be empty"
+            }
+        }
+    },
     type_of_event: { type: DataTypes.STRING },
 },{
     underscored: true
@@ -62,8 +147,24 @@ const Risk_Driver = sequelize.define('risk_drivers', {
  * Define Accessment Framework resource
  */
 const Assessment_Framework = sequelize.define('assessment_frameworks', {
-    category: { type: DataTypes.STRING },
-    sub_category: { type: DataTypes.STRING },
+    category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Category cannot be empty"
+            }
+        }
+    },
+    sub_category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Sub-category cannot be empty"
+            }
+        }
+    },
     description: { type: DataTypes.STRING },
 }, {
     underscored: true
@@ -72,8 +173,24 @@ const Assessment_Framework = sequelize.define('assessment_frameworks', {
  * Define Improvement Framework resource
  */
 const Improvement_Framework = sequelize.define('improvement_frameworks', {
-    theme: { type: DataTypes.STRING },
-    category: { type: DataTypes.STRING },
+    theme: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Theme cannot be empty"
+            }
+        }
+    },
+    category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Category cannot be empty"
+            }
+        }
+    },
     description: { type: DataTypes.STRING },
     example: { type: DataTypes.STRING },
 }, {
@@ -83,10 +200,34 @@ const Improvement_Framework = sequelize.define('improvement_frameworks', {
  * Define Policy resource
  */
 const Policy = sequelize.define('policies', {
-    theme: { type: DataTypes.STRING },
-    category: { type: DataTypes.STRING },
+    theme: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Theme cannot be empty"
+            }
+        }
+    },
+    category: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Category cannot be empty"
+            }
+        }
+    },
     pmm_ref: { type: DataTypes.INTEGER },
-    title: { type: DataTypes.STRING },
+    title: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Title cannot be empty"
+            }
+        }
+    },
     version: { type: DataTypes.INTEGER },
     last_reviewed: { type: DataTypes.DATE },
 }, {
@@ -94,11 +235,31 @@ const Policy = sequelize.define('policies', {
 });
 const Review = sequelize.define('reviews', {
     date_approved: { type: DataTypes.DATE },
-    review_interval: { type: DataTypes.INTEGER },
-    specified_review_date: { type: DataTypes.DATE },
+    review_interval: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Review Interval value must be specified"
+            }
+        }
+    },
+    specified_review_date: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "A scheduled review date must be specified"
+            },
+            isAfter: {
+                args: moment().subtract(1, 'day').toString(),
+                msg: "Cannot set review date in the past"
+            }
+        }
+    },
     reviewed_date: { type: DataTypes.DATE },
     next_review: { type: DataTypes.DATE },
-    status: { type: DataTypes.STRING }
+    status: { type: DataTypes.STRING },
 }, {
     underscored: true
 })
@@ -106,9 +267,33 @@ const Review = sequelize.define('reviews', {
  * Define Compliance Assessment resource
  */
 const Compliance_Assessment = sequelize.define('compliance_assessments', {
-    policy: { type: DataTypes.STRING },
-    procedures: { type: DataTypes.STRING },
-    data: { type: DataTypes.STRING },
+    policy: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Rating value must be indicated"
+            }
+        }
+    },
+    procedures: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Rating value must be indicated"
+            }
+        }
+    },
+    data: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            notEmpty: {
+                msg: "Rating value must be indicated"
+            }
+        }
+    },
     treatment_option: { type: DataTypes.STRING },
     risk_rating: { type: DataTypes.STRING },
     residual_risk_rating: { type: DataTypes.STRING},
@@ -124,14 +309,18 @@ const Standard_Policy = sequelize.define('standard_policies', {
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-        }
+        },
+        allowNull: false,
+        unique: "compositeIndex"
     },
     PolicyId: {
         type: DataTypes.INTEGER,
         references: {
             model: Policy,
         },
-    }
+        allowNull: false,
+        unique: "compositeIndex"
+    },
 }, {
     underscored: true
 });
@@ -143,13 +332,15 @@ const Standard_Risk_Driver = sequelize.define('standard_risk_drivers', {
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-        }
+        },
+        allowNull: false
     },
     RiskDriverId: {
         type: DataTypes.INTEGER,
         references: {
             model: Risk_Driver,
-        }
+        },
+        allowNull: false
     }
 }, {
     underscored: true
@@ -162,13 +353,15 @@ const Standard_Assessment_Framework = sequelize.define('standard_assessment_fram
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-        }
+        },
+        allowNull: false
     },
     AssessmentFrameworkId: {
         type: DataTypes.INTEGER,
         references: {
             model: Assessment_Framework,
-        }
+        },
+        allowNull: false
     }
 }, {
     underscored: true
@@ -181,13 +374,15 @@ const Standard_Improvement_Framework = sequelize.define('standard_improvement_fr
         type: DataTypes.INTEGER,
         references: {
             model: Standard,
-        }
+        },
+        allowNull: false
     },
     ImprovementFrameworkId: {
         type: DataTypes.INTEGER,
         references: {
             model: Improvement_Framework,
-        }
+        },
+        allowNull: false
     }
 }, {
     underscored: true
@@ -299,7 +494,7 @@ Review.addHook('beforeSave', (review, options) => {
     console.log(today);
 
     // Update review status field
-    if (compare_dates(today, review.specified_review_date) === 1) review.status = "Overdue";
+    if (compare_dates(today, review.specified_review_date) === 1) return; // Don't allow user to set review date in the past
     else if (!review.reviewed_date && compare_dates(today, review.specified_review_date) === 1) review.status = "Overdue";
     else if (
         review.reviewed_date &&
@@ -398,6 +593,14 @@ const run = async () => {
                                 { value: 'Admin', label: 'Admin' }
                             ],
                         },
+                        password: {
+                            isVisible: {
+                                list: false,
+                                show: false,
+                                edit: true,
+                                filter: false
+                            }
+                        }
                     },
                     actions: {
                         new: {
@@ -409,7 +612,6 @@ const run = async () => {
                                 request.payload = {
                                     ...request.payload,
                                     encrypted_password: await bcrypt.hash(request.payload.password, 10),
-                                    password: undefined
                                     }
                                 }
                                 return request
@@ -428,7 +630,6 @@ const run = async () => {
                                 request.payload = {
                                 ...request.payload,
                                 encrypted_password: await bcrypt.hash(request.payload.password, 10),
-                                password: undefined
                                 }
                             }
 
@@ -438,11 +639,6 @@ const run = async () => {
                         delete: {
                             isAccessible: isAdmin
                         },
-                        show: {
-                            properties: {
-                                password: { isVisible: false }
-                            },
-                        }
                     }
 			    }
             }, {

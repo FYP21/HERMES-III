@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+main() {
+  local -r component=${1:-'web'}
+  docker-compose logs -f "${component}" 
+}
+
+main "$@"

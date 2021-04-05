@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -eou pipefail
+
+main() {
+  if [ ! -z "$(docker-compose ps -q web)" ]; then
+      docker-compose exec web npm run db:migrate
+  else
+    ./up
+  fi
+}
+
+main
