@@ -39,6 +39,8 @@ const Dashboard = () => {
   }, []);
 
   console.log(next_review);
+  const pending_review = next_review.filter((review) => review.params.status === 'Pending');
+  const overdue_review = next_review.filter((review) => review.params.status === 'Overdue');
   
  
   return (
@@ -50,7 +52,7 @@ const Dashboard = () => {
           <Box flex>
             <Box variant="grey" flex flexDirection="column">
               
-            <H2><strong>Upcoming Reviews  </strong><Badge variant="danger">{next_review.length}</Badge> </H2>
+            <H2><strong>Upcoming Reviews  </strong><Badge variant="danger">{pending_review.length}</Badge> </H2>
 
             {!loading ? (<Loader />) : (
             next_review.map((reviews) => {
@@ -81,7 +83,7 @@ const Dashboard = () => {
         </Box>
 
         <Box variant="grey" flex flexDirection="column" flexGrow={1}>
-            <H2><strong>Overdue  </strong><Badge variant="danger">{next_review.length}</Badge> </H2>
+            <H2><strong>Overdue  </strong><Badge variant="danger">{overdue_review.length}</Badge> </H2>
     
                   {!loading ? ( <Loader />) : (
                   next_review.map((reviews) => {
