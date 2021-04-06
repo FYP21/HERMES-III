@@ -621,6 +621,9 @@ const run = async () => {
                                 return response
                             }
                         },
+                        list: {
+                            isAccessible: isAdmin
+                        },
                         edit: {
                             isAccessible: isAdmin,
                             before: async (request) => {
@@ -868,6 +871,10 @@ const run = async () => {
         branding: {
             companyName: 'HERMES III',
             logo: '/Murdoch_logo.png'
+        },
+        dashboard: {
+            handler: async () => {},
+            component: AdminBro.bundle('../components/dashboard'),
         },
     });
 
