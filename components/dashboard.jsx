@@ -70,7 +70,7 @@ const Dashboard = () => {
                               <H5>Next Review: {reviews.params.next_review}</H5>
                             
                               <hr/>
-                              <Link href="/admin/resources/Reviews" >
+                              <Link href={'/admin/resources/reviews/records/' + reviews.params.id + '/show' }>
                                 <Button onClick={() => {}} >Review</Button>
                               </Link>
                             </Box>
@@ -99,7 +99,7 @@ const Dashboard = () => {
                                     <Badge variant="danger">{reviews.params.status}</Badge>
                                     <H5>Next Review: {reviews.params.next_review}</H5>
                                     <hr/>
-                                    <Link href="/admin/resources/Weather" >
+                                    <Link href={'/admin/resources/reviews/records/' + reviews.params.id + '/show' }>
                                       <Button onClick={() => {}} >Review</Button>
                                     </Link>
                                   </Box>
